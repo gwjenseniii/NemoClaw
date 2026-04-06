@@ -22,6 +22,10 @@ status: published
 
 NVIDIA NemoClaw is available in early preview starting March 16, 2026. Use the following GitHub resources to track changes.
 
+## Unreleased
+
+- Added a host-side Slack Socket Mode bridge script for forwarding Slack messages to the sandboxed agent.
+
 | Resource | Description |
 |---|---|
 | [Releases](https://github.com/NVIDIA/NemoClaw/releases) | Versioned release notes and downloadable assets. |

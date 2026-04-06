@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Start NemoClaw auxiliary services: Telegram bridge
+# Start NemoClaw auxiliary services: Telegram bridge, Slack bridge,
 # and cloudflared tunnel for public access.
 #
 # Usage:
@@ -97,7 +97,7 @@ stop_service() {
 show_status() {
   mkdir -p "$PIDDIR"
   echo ""
-  for svc in telegram-bridge cloudflared; do
+  for svc in telegram-bridge slack-bridge cloudflared; do
     if is_running "$svc"; then
       echo -e "  ${GREEN}●${NC} $svc  (PID $(cat "$PIDDIR/$svc.pid"))"
     else
@@ -118,6 +118,7 @@ show_status() {
 do_stop() {
   mkdir -p "$PIDDIR"
   stop_service cloudflared
+  stop_service slack-bridge
   stop_service telegram-bridge
   info "All services stopped."
 }
@@ -129,6 +130,13 @@ do_start() {
   elif [ -z "${NVIDIA_API_KEY:-}" ]; then
     warn "NVIDIA_API_KEY not set — Telegram bridge will not start."
     warn "Set NVIDIA_API_KEY if you want Telegram requests to reach inference."
+  fi
+  if [ -z "${SLACK_BOT_TOKEN:-}" ] || [ -z "${SLACK_APP_TOKEN:-}" ]; then
+    warn "SLACK_BOT_TOKEN or SLACK_APP_TOKEN not set — Slack bridge will not start."
+    warn "Socket Mode requires xoxb- and xapp- tokens."
+  fi
+  if [ -z "${NVIDIA_API_KEY:-}" ]; then
+    warn "NVIDIA_API_KEY not set — Slack bridge may fail with NVIDIA inference."
   fi
 
   command -v node >/dev/null || fail "node not found. Install Node.js first."
@@ -155,6 +163,11 @@ do_start() {
   if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${NVIDIA_API_KEY:-}" ]; then
     SANDBOX_NAME="$SANDBOX_NAME" start_service telegram-bridge \
       node "$REPO_DIR/scripts/telegram-bridge.js"
+  fi
+  # Slack bridge (only if tokens provided)
+  if [ -n "${SLACK_BOT_TOKEN:-}" ] && [ -n "${SLACK_APP_TOKEN:-}" ]; then
+    SANDBOX_NAME="$SANDBOX_NAME" start_service slack-bridge \
+      npx tsx "$REPO_DIR/scripts/slack-bridge.ts"
   fi
 
   # 3. cloudflared tunnel
@@ -197,6 +210,12 @@ do_start() {
     echo "  │  Telegram:    bridge running                        │"
   else
     echo "  │  Telegram:    not started (no token)                │"
+  fi
+
+  if is_running slack-bridge; then
+    echo "  │  Slack:       bridge running                        │"
+  else
+    echo "  │  Slack:       not started (no tokens)               │"
   fi
 
   echo "  │                                                     │"

@@ -113,6 +113,16 @@ Alternatively, send a single message and print the response:
 openclaw agent --agent main --local -m "hello" --session-id test
 ```
 
+### Messaging Bridges
+
+NemoClaw supports host-side messaging bridges that forward chat messages into
+the sandboxed OpenClaw agent. The Telegram bridge is built in, and a Slack
+Socket Mode bridge is available as an optional script.
+
+- Telegram bridge: follow the docs at `docs/deployment/set-up-telegram-bridge.md`.
+- Slack bridge (Socket Mode): see `scripts/slack-bridge.md`.
+- Start services (Telegram/Slack/cloudflared): `scripts/start-services.sh`.
+
 ### Uninstall
 
 To remove NemoClaw and all resources created during setup, run the uninstall script:
